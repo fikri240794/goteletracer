@@ -1,43 +1,120 @@
-# Go Open Telemetry Tracer (goteletracer)
+# GoTeleTracer 🔍
+
 Open Telemetry Tracer with Insecure GRPC Exporter for Go.
 
-## Installation
+## 📦 Installation
+
 ```bash
 go get github.com/fikri240794/goteletracer
 ```
 
-## Usage
+## 🚀 Quick Start
+
+### Basic Usage (Simple)
+
 ```go
 package main
 
 import (
-	"context"
-	"fmt"
-	"go.opentelemetry.io/otel/trace"
-	"github.com/fikri240794/goteletracer"
+    "context"
+    "fmt"
+    
+    "github.com/fikri240794/goteletracer"
 )
-
-var (
-	tracer trace.Tracer = goteletracer.NewTracer(nil)
-)
-
-func sum(ctx context.Context, a, b int) int {
-	ctx, span := tracer.Start(ctx, "sum")
-	defer span.End()
-
-	return a + b
-}
 
 func main() {
-	var cfg *goteletracer.Config = &goteletracer.Config{
-		ServiceName:         "some-service",
-		ExporterGRPCAddress: "localhost:4317",
-	}
+    // Create tracer with configuration
+    config := &goteletracer.Config{
+        ServiceName:         "my-awesome-service",
+        ExporterGRPCAddress: "localhost:4317",
+    }
+    
+    tracer := goteletracer.NewTracer(config)
+    
+    // Your business logic here
+    result := doSomething(context.Background())
+    fmt.Println("Result:", result)
+}
 
-	tracer = goteletracer.NewTracer(cfg)
+func doSomething(ctx context.Context) string {
+    // Create and use spans
+    ctx, span := tracer.Start(ctx, "doSomething")
+    defer span.End()
 
-	var val int = sum(context.Background(), 1, 1)
-
-	fmt.Println(val)
+    return "Hello, World!"
 }
 ```
+
+## 🔧 Configuration
+
+### Config Structure
+
+```go
+type Config struct {
+    // ServiceName is the name of your service (required)
+    ServiceName string
+    
+    // ExporterGRPCAddress is the OTLP collector endpoint (required)
+    // Example: "localhost:4317", "jaeger:14250"
+    ExporterGRPCAddress string
+    
+    // ShutdownTimeout defines maximum time for graceful shutdown
+    // Default: 30 seconds
+    ShutdownTimeout time.Duration
+}
+```
+
+### Environment Setup
+
+For local development with OTLP collector and Jaeger, check out the complete setup example at:
+🔗 **[go-otel-tracer-example](https://github.com/fikri240794/go-otel-tracer-example)**
+
+This repository provides a complete Docker Compose setup for local development with OpenTelemetry.
+
+## 🎯 API Reference
+
+### Functions
+
+#### `NewTracer(cfg *Config) trace.Tracer`
+Creates a new OpenTelemetry tracer. Returns a noop tracer if config is nil or invalid.
+
+#### `NewTracerProvider(cfg *Config) (*TracerProvider, error)`
+Creates a new TracerProvider with proper resource management. **Recommended for production use.**
+
+### TracerProvider Methods
+
+#### `Tracer() trace.Tracer`
+Returns the underlying OpenTelemetry tracer.
+
+#### `Shutdown(ctx context.Context) error`
+Gracefully shuts down the provider and flushes all spans. Safe to call multiple times.
+
+### Error Types
+
+```go
+var (
+    ErrNilConfig             = errors.New("config cannot be nil")
+    ErrEmptyServiceName      = errors.New("service name cannot be empty")
+    ErrEmptyExporterAddress  = errors.New("exporter GRPC address cannot be empty")
+    ErrInvalidExporterAddress = errors.New("exporter GRPC address is invalid")
+)
+```
+
+## 📚 Examples
+
+Check out the [examples](./examples/) directory for comprehensive usage examples:
+
+```bash
+# Run the examples
+cd examples
+go run main.go
+```
+
+The examples demonstrate:
+- Basic tracer usage
+- Advanced TracerProvider usage
+- Error handling patterns
+- Complex nested spans
+- Graceful shutdown
+
+---
